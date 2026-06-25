@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #eee; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #555; }
+        .section { margin: 20px 0; padding: 15px; background: #fafafa; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1 id="title">Loading...</h1>
+        <div class="section">
+            <h3>일시</h3>
+            <p id="date"></p>
+        </div>
+        <div class="section">
+            <h3>장소</h3>
+            <p id="location"></p>
+        </div>
+        <div class="section">
+            <h3>계좌번호</h3>
+            <p id="account"></p>
+        </div>
+    </div>
+
+    <script>
+        // 배포된 서버 주소로 반드시 변경하세요
+        const SERVER_URL = 'https://my-web-server-xxxx.onrender.com';
+
+        fetch(`${SERVER_URL}/api/wedding-info`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('title').innerText = data.title;
+                document.getElementById('date').innerText = data.date;
+                document.getElementById('location').innerText = data.location;
+                document.getElementById('account').innerText = data.account;
+            });
+    </script>
+</body>
+</html>
