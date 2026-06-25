@@ -2,15 +2,10 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- 모바일 화면에 앱처럼 꽉 차게 보이도록 설정 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 위치 공유</title>
 
-    <!-- 카카오톡 기능을 가져오는 공식 코드 -->
-    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
-
     <style>
-        /* 앱 화면 디자인 (배경, 버튼 색상 등) */
         body { 
             font-family: 'Apple SD Gothic Neo', sans-serif; 
             background-color: #f4f4f4; 
@@ -30,7 +25,6 @@
         }
         h2 { margin-top: 0; color: #333; }
         
-        /* 사진 업로드 버튼 스타일 */
         .file-upload { margin: 15px 0; }
         #preview { 
             width: 100%; 
@@ -39,7 +33,6 @@
             margin-bottom: 15px; 
         }
         
-        /* 코멘트 입력창 스타일 */
         textarea { 
             width: 90%; 
             padding: 15px; 
@@ -51,10 +44,9 @@
             font-size: 15px;
         }
         
-        /* 카카오톡 버튼 스타일 */
-        .kakao-btn { 
-            background-color: #FEE500; 
-            color: #000; 
+        .share-btn { 
+            background-color: #007BFF; /* 파란색 버튼으로 변경 */
+            color: #FFF; 
             border: none; 
             padding: 16px; 
             font-size: 16px; 
@@ -70,7 +62,6 @@
     <div class="app-container">
         <h2>📍 현재 위치 공유하기</h2>
 
-        <!-- 카메라 및 갤러리 접근 -->
         <div class="file-upload">
             <label for="cameraInput" style="cursor:pointer; color:#007BFF; font-weight:bold;">
                 📸 여기를 눌러 사진 찍기/고르기
@@ -78,21 +69,17 @@
             <input type="file" id="cameraInput" accept="image/*" style="display:none;">
         </div>
         
-        <!-- 찍은 사진 미리보기 -->
         <img id="preview" alt="미리보기">
 
-        <!-- 코멘트 입력창 -->
+        <!-- 코멘트 입력창에 남미 여행 느낌을 살짝 넣어봤어요! -->
         <textarea id="comment" placeholder="Ya regresé! (나 돌아왔어!) 등 코멘트를 남겨보세요."></textarea>
 
-        <!-- 전송 버튼 -->
-        <button class="kakao-btn" onclick="sendToKakao()">💬 카카오톡으로 위치 보내기</button>
+        <!-- 버튼 이름과 색상을 바꿨습니다 -->
+        <button class="share-btn" onclick="shareLocation()">🚀 위치 공유하기</button>
     </div>
 
     <script>
-        // ★중요★ 카카오 디벨로퍼스에서 발급받은 본인의 'JavaScript 키'를 아래 따옴표 안에 넣어야 합니다!
-        Kakao.init('여기에_본인의_카카오_자바스크립트_키를_넣으세요'); 
-
-        // 1. 사진 미리보기 기능
+        // 1. 사진 미리보기 기능 (이전과 동일)
         const cameraInput = document.getElementById('cameraInput');
         const preview = document.getElementById('preview');
 
@@ -102,45 +89,53 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.src = e.target.result;
-                    preview.style.display = 'block'; // 사진을 찍으면 화면에 보여줌
+                    preview.style.display = 'block';
                 }
                 reader.readAsDataURL(file);
             }
         });
 
-        // 2. 현재 위치(GPS) 가져와서 카카오톡으로 보내기
-        function sendToKakao() {
-            // 입력한 코멘트 가져오기
+        // 2. 카카오 API 없이 스마트폰 기본 공유 기능(Web Share API) 사용하기!
+        async function shareLocation() {
             const comment = document.getElementById('comment').value;
 
-            // GPS 정보 가져오기
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
+                // 위치 찾는 중임을 알림
+                const btn = document.querySelector('.share-btn');
+                const originalText = btn.innerText;
+                btn.innerText = "⏳ 위치 찾는 중...";
+
+                navigator.geolocation.getCurrentPosition(async function(position) {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     
-                    // 구글 지도 링크 생성
+                    // 구글 지도 링크 생성 (이건 가입 없이 무제한 무료입니다)
                     const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
                     
-                    // 보낼 메시지 조립
-                    let messageText = '📍 내 현재 위치를 확인해봐!';
-                    if (comment) {
-                        messageText = comment + '\n\n' + messageText;
+                    let shareText = comment ? `${comment}\n\n📍 내 현재 위치야!` : '📍 내 현재 위치야!';
+
+                    // 스마트폰 기본 공유 창 띄우기
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: '내 위치 공유',
+                                text: shareText,
+                                url: mapLink
+                            });
+                        } catch (error) {
+                            console.log('공유를 취소했거나 에러가 났습니다.', error);
+                        }
+                    } else {
+                        alert('현재 브라우저에서는 공유 기능을 지원하지 않습니다.\n링크를 복사해주세요: ' + mapLink);
                     }
 
-                    // 카카오톡 공유 실행
-                    Kakao.Share.sendDefault({
-                        objectType: 'text',
-                        text: messageText,
-                        link: {
-                            mobileWebUrl: mapLink,
-                            webUrl: mapLink
-                        },
-                        buttonTitle: '구글 지도에서 위치 보기'
-                    });
+                    // 버튼 글씨 원상복구
+                    btn.innerText = originalText;
+
                 }, function(error) {
-                    alert('위치 정보를 가져올 수 없습니다. 핸드폰의 GPS(위치) 설정이 켜져 있는지 확인해주세요.');
-                });
+                    alert('위치 정보를 가져올 수 없습니다. 핸드폰의 GPS(위치)가 켜져 있는지 확인해주세요.');
+                    btn.innerText = originalText;
+                }, { enableHighAccuracy: true }); // 위치 정확도 높이기 옵션 추가
             } else {
                 alert('사용 중인 브라우저에서 위치 기능을 지원하지 않습니다.');
             }
