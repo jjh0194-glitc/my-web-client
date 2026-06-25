@@ -2,67 +2,149 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>초대합니다</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- 모바일 화면에 앱처럼 꽉 차게 보이도록 설정 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>내 위치 공유</title>
+
+    <!-- 카카오톡 기능을 가져오는 공식 코드 -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+
     <style>
-        body { font-family: 'Noto Serif KR', serif; background-color: #fdfaf6; color: #4a4a4a; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .card { background: white; width: 100%; max-width: 450px; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
-        h1 { font-size: 1.6rem; color: #8c7851; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .section { margin-bottom: 30px; }
-        .label { font-size: 0.75rem; color: #aaa; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
-        .content { font-size: 1.1rem; line-height: 1.6; }
+        /* 앱 화면 디자인 (배경, 버튼 색상 등) */
+        body { 
+            font-family: 'Apple SD Gothic Neo', sans-serif; 
+            background-color: #f4f4f4; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+        }
+        .app-container { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center;
+        }
+        h2 { margin-top: 0; color: #333; }
         
-        /* 복사 버튼 스타일 */
-        .copy-btn { margin-top: 10px; padding: 5px 15px; background: #8c7851; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
-        .copy-btn:hover { background: #6d5e40; }
+        /* 사진 업로드 버튼 스타일 */
+        .file-upload { margin: 15px 0; }
+        #preview { 
+            width: 100%; 
+            border-radius: 12px; 
+            display: none; 
+            margin-bottom: 15px; 
+        }
+        
+        /* 코멘트 입력창 스타일 */
+        textarea { 
+            width: 90%; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 12px; 
+            height: 80px; 
+            resize: none; 
+            margin-bottom: 20px; 
+            font-size: 15px;
+        }
+        
+        /* 카카오톡 버튼 스타일 */
+        .kakao-btn { 
+            background-color: #FEE500; 
+            color: #000; 
+            border: none; 
+            padding: 16px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            width: 100%; 
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1 id="title">초대합니다</h1>
-    
-    <div class="section">
-        <div class="label">일시</div>
-        <div id="date" class="content">불러오는 중...</div>
-    </div>
-    
-    <div class="section">
-        <div class="label">장소</div>
-        <div id="location" class="content">불러오는 중...</div>
-    </div>
-    
-    <div class="section">
-        <div class="label">계좌번호</div>
-        <div id="account" class="content">불러오는 중...</div>
-        <button class="copy-btn" onclick="copyAccount()">계좌번호 복사</button>
-    </div>
-</div>
+    <div class="app-container">
+        <h2>📍 현재 위치 공유하기</h2>
 
-<script>
-    // 1. 배포된 서버 주소로 반드시 변경하세요
-    const SERVER_URL = 'https://my-web-server-5qln.onrender.com';
+        <!-- 카메라 및 갤러리 접근 -->
+        <div class="file-upload">
+            <label for="cameraInput" style="cursor:pointer; color:#007BFF; font-weight:bold;">
+                📸 여기를 눌러 사진 찍기/고르기
+            </label>
+            <input type="file" id="cameraInput" accept="image/*" style="display:none;">
+        </div>
+        
+        <!-- 찍은 사진 미리보기 -->
+        <img id="preview" alt="미리보기">
 
-    fetch(`${SERVER_URL}/api/wedding-info`)
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('title').innerText = data.title;
-            document.getElementById('date').innerText = data.date;
-            document.getElementById('location').innerText = data.location;
-            document.getElementById('account').innerText = data.account;
-        })
-        .catch(err => {
-            document.getElementById('title').innerText = "정보를 불러올 수 없습니다.";
+        <!-- 코멘트 입력창 -->
+        <textarea id="comment" placeholder="Ya regresé! (나 돌아왔어!) 등 코멘트를 남겨보세요."></textarea>
+
+        <!-- 전송 버튼 -->
+        <button class="kakao-btn" onclick="sendToKakao()">💬 카카오톡으로 위치 보내기</button>
+    </div>
+
+    <script>
+        // ★중요★ 카카오 디벨로퍼스에서 발급받은 본인의 'JavaScript 키'를 아래 따옴표 안에 넣어야 합니다!
+        Kakao.init('여기에_본인의_카카오_자바스크립트_키를_넣으세요'); 
+
+        // 1. 사진 미리보기 기능
+        const cameraInput = document.getElementById('cameraInput');
+        const preview = document.getElementById('preview');
+
+        cameraInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block'; // 사진을 찍으면 화면에 보여줌
+                }
+                reader.readAsDataURL(file);
+            }
         });
 
-    // 계좌번호 복사 기능
-    function copyAccount() {
-        const text = document.getElementById('account').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("계좌번호가 복사되었습니다.");
-        });
-    }
-</script>
+        // 2. 현재 위치(GPS) 가져와서 카카오톡으로 보내기
+        function sendToKakao() {
+            // 입력한 코멘트 가져오기
+            const comment = document.getElementById('comment').value;
+
+            // GPS 정보 가져오기
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // 구글 지도 링크 생성
+                    const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                    
+                    // 보낼 메시지 조립
+                    let messageText = '📍 내 현재 위치를 확인해봐!';
+                    if (comment) {
+                        messageText = comment + '\n\n' + messageText;
+                    }
+
+                    // 카카오톡 공유 실행
+                    Kakao.Share.sendDefault({
+                        objectType: 'text',
+                        text: messageText,
+                        link: {
+                            mobileWebUrl: mapLink,
+                            webUrl: mapLink
+                        },
+                        buttonTitle: '구글 지도에서 위치 보기'
+                    });
+                }, function(error) {
+                    alert('위치 정보를 가져올 수 없습니다. 핸드폰의 GPS(위치) 설정이 켜져 있는지 확인해주세요.');
+                });
+            } else {
+                alert('사용 중인 브라우저에서 위치 기능을 지원하지 않습니다.');
+            }
+        }
+    </script>
 </body>
 </html>
