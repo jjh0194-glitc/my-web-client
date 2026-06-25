@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>My Client</title>
+</head>
+<body>
+    <h1>웹 프로젝트입니다.</h1>
+    <p id="response">서버 응답을 기다리는 중...</p>
+
+    <script>
+        // 서버 주소 (Render에서 배포할 실제 주소로 나중에 수정하세요)
+        const SERVER_URL = 'http://localhost:3000'; 
+
+        fetch(SERVER_URL)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('response').innerText = data.message;
+            })
+            .catch(err => console.error('Error:', err));
+    </script>
+</body>
+</html>
